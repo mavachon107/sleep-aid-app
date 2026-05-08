@@ -1,12 +1,17 @@
 // Minuteur d'arrêt automatique avec fondu sortant final.
+//
+// Utilise setTimeout (et non requestAnimationFrame) pour continuer à tourner
+// quand l'écran est verrouillé — rAF est suspendu en arrière-plan. setTimeout
+// reste actif (throttlé à ~1 s) tant que l'élément <audio> joue.
 
 const PRESETS = [15, 30, 45, 60, 90]; // minutes
 const FADE_SEC = 30;
+const TICK_MS = 500;
 
 export function createTimer({ onTick, onFadeStart, onEnd }) {
   let durationMin = 30;
   let endAt = 0;
-  let raf = 0;
+  let timer = 0;
   let fadeTriggered = false;
   let running = false;
 
@@ -19,7 +24,7 @@ export function createTimer({ onTick, onFadeStart, onEnd }) {
 
   function tick() {
     if (!running) return;
-    const remaining = endAt - performance.now();
+    const remaining = endAt - Date.now();
     onTick?.(format(remaining), remaining);
     if (!fadeTriggered && remaining <= FADE_SEC * 1000) {
       fadeTriggered = true;
@@ -27,11 +32,11 @@ export function createTimer({ onTick, onFadeStart, onEnd }) {
     }
     if (remaining <= 0) {
       running = false;
-      cancelAnimationFrame(raf);
+      clearTimeout(timer);
       onEnd?.();
       return;
     }
-    raf = requestAnimationFrame(tick);
+    timer = setTimeout(tick, TICK_MS);
   }
 
   return {
@@ -49,12 +54,14 @@ export function createTimer({ onTick, onFadeStart, onEnd }) {
     start() {
       fadeTriggered = false;
       running = true;
-      endAt = performance.now() + durationMin * 60 * 1000;
-      raf = requestAnimationFrame(tick);
+      // Date.now() (et non performance.now()) car les horloges monotones se
+      // gèlent parfois en arrière-plan ; Date.now() reste cohérent au réveil.
+      endAt = Date.now() + durationMin * 60 * 1000;
+      timer = setTimeout(tick, 0);
     },
     stop() {
       running = false;
-      cancelAnimationFrame(raf);
+      clearTimeout(timer);
     },
     isRunning: () => running,
   };

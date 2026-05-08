@@ -52,6 +52,10 @@
       <form method="dialog"><button class="btn-close">Fermer</button></form>
     </dialog>
 
+    <!-- Élément média officiel : indispensable pour que l'audio continue
+         quand l'écran se verrouille ou que l'app passe en arrière-plan (iOS). -->
+    <audio id="audio" playsinline preload="auto" hidden></audio>
+
     <script type="module" src="src/main.js"></script>
   </body>
 </html>

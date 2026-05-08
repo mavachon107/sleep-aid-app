@@ -1,6 +1,7 @@
 // Sons de la nature, synthétisés (aucun fichier audio).
-// - Pluie : bruit rose passe-bas + bursts haute fréquence (gouttes) à intervalles aléatoires.
+// - Pluie : bruit rose passe-bas + bursts haute fréquence (gouttes) pré-planifiés via AudioParam.
 // - Vagues : bruit rose modulé par un LFO basse fréquence (~0,08 Hz).
+// Compatibles OfflineAudioContext : aucun setTimeout dans la construction du graphe.
 
 function makePinkLoop(ctx, seconds = 30) {
   const len = ctx.sampleRate * seconds;
@@ -37,10 +38,10 @@ function makeWhiteLoop(ctx, seconds = 5) {
   return src;
 }
 
-export function makeRain() {
+export function makeRain(duration = 60) {
   return (ctx, dest) => {
     // Lit de pluie : rose → passe-bas.
-    const bed = makePinkLoop(ctx);
+    const bed = makePinkLoop(ctx, duration);
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.frequency.value = 1800;
@@ -49,36 +50,33 @@ export function makeRain() {
     bed.connect(lp).connect(bedGain).connect(dest);
     bed.start();
 
-    // Gouttes : blanc → passe-bande haute, modulé par enveloppes courtes.
-    const drops = makeWhiteLoop(ctx);
+    // Gouttes : blanc → passe-bande haute, modulé par enveloppes pré-planifiées.
+    const drops = makeWhiteLoop(ctx, Math.min(5, duration));
     const bp = ctx.createBiquadFilter();
     bp.type = "bandpass";
     bp.frequency.value = 4500;
     bp.Q.value = 0.8;
     const dropGain = ctx.createGain();
-    dropGain.gain.value = 0;
+    dropGain.gain.setValueAtTime(0, 0);
     drops.connect(bp).connect(dropGain).connect(dest);
     drops.start();
 
-    // Processus de Poisson ≈ 12 gouttes/s.
-    let stopped = false;
-    const tickDrop = () => {
-      if (stopped) return;
-      const t = ctx.currentTime;
+    // Pré-planification d'un processus de Poisson (~12 gouttes/s) sur [0, duration].
+    let t = 0;
+    while (true) {
+      t += -Math.log(1 - Math.random()) / 12;
+      if (t >= duration) break;
       const peak = 0.04 + Math.random() * 0.06;
+      const decay = 0.05 + Math.random() * 0.05;
       dropGain.gain.setValueAtTime(0, t);
       dropGain.gain.linearRampToValueAtTime(peak, t + 0.005);
-      dropGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.05 + Math.random() * 0.05);
-      const next = -Math.log(1 - Math.random()) / 12;
-      setTimeout(tickDrop, next * 1000);
-    };
-    tickDrop();
+      dropGain.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    }
 
     return {
-      stop: (t = 0) => {
-        stopped = true;
-        try { bed.stop(t); } catch {}
-        try { drops.stop(t); } catch {}
+      stop: (at = 0) => {
+        try { bed.stop(at); } catch {}
+        try { drops.stop(at); } catch {}
       },
     };
   };

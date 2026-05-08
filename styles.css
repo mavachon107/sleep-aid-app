@@ -149,8 +149,18 @@ html, body {
   border-color: var(--accent);
   box-shadow: 0 0 60px -20px var(--accent);
 }
+.play-btn.loading {
+  opacity: 0.55;
+  cursor: progress;
+  animation: pulse 1.2s ease-in-out infinite;
+}
 .play-btn svg { fill: currentColor; transform: translateX(2px); }
 .play-btn.playing svg { transform: none; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.75; }
+}
 
 .volume {
   padding: 0 24px 24px;

@@ -1,6 +1,6 @@
 // Point d'entrée : câble UI ↔ moteur audio ↔ minuteur.
 
-import { play, stop, setVolume, fadeOutAndStop } from "./audio/engine.js";
+import { play, stop, setVolume, fadeOutAndStop, unlockAudio } from "./audio/engine.js";
 import { SOUNDS } from "./data/sounds.js";
 import { createTimer } from "./ui/timer.js";
 import {
@@ -26,19 +26,30 @@ const timer = createTimer({
 
 const picker = setupSoundPicker({
   initialId: INITIAL_ID,
-  onSelect: (s) => {
+  onSelect: async (s) => {
     currentSound = s;
     if (playUI.isPlaying()) {
-      play(s.factory());
+      playUI.setLoading(true);
+      try {
+        await play(s);
+      } finally {
+        playUI.setLoading(false);
+      }
     }
   },
 });
 
 const playUI = setupPlayButton({
+  onPress: () => unlockAudio(), // synchronously, within the user gesture
   onToggle: async (shouldPlay) => {
     if (shouldPlay) {
-      await play(currentSound.factory());
-      timer.start();
+      playUI.setLoading(true);
+      try {
+        await play(currentSound);
+        timer.start();
+      } finally {
+        playUI.setLoading(false);
+      }
     } else {
       timer.stop();
       stop(0.5);

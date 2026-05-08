@@ -1,4 +1,4 @@
-const CACHE = "sommeil-v1";
+const CACHE = "sommeil-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./src/main.js",
   "./src/audio/engine.js",
+  "./src/audio/render.js",
   "./src/audio/coloredNoise.js",
   "./src/audio/binaural.js",
   "./src/audio/nature.js",

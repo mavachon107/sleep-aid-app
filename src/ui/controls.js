@@ -60,12 +60,15 @@ export function setupSoundPicker({ onSelect, initialId }) {
   };
 }
 
-export function setupPlayButton({ onToggle }) {
+export function setupPlayButton({ onToggle, onPress }) {
   const btn = document.getElementById("play-btn");
   const icon = document.getElementById("play-icon");
   let playing = false;
 
   btn.addEventListener("click", () => {
+    // onPress doit s'exécuter de façon synchrone dans le geste utilisateur
+    // (nécessaire pour débloquer l'élément <audio> sur iOS).
+    onPress?.();
     playing = !playing;
     setVisual(playing);
     onToggle(playing);
@@ -87,6 +90,10 @@ export function setupPlayButton({ onToggle }) {
     setPlaying(p) {
       playing = p;
       setVisual(p);
+    },
+    setLoading(l) {
+      btn.classList.toggle("loading", !!l);
+      btn.disabled = !!l;
     },
     isPlaying: () => playing,
   };
