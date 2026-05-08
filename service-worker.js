@@ -1,4 +1,4 @@
-const CACHE = "sommeil-v2";
+const CACHE = "sommeil-v3";
 const ASSETS = [
   "./",
   "./index.html",

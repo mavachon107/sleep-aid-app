@@ -37,8 +37,16 @@ html, body {
 
 .topbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding-top: 16px;
+}
+
+.version {
+  color: var(--fg-dim);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
 }
 
 .icon-btn {
