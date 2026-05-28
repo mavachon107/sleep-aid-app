@@ -1,9 +1,10 @@
-// Bruits blanc, rose, brun. Génère un AudioBuffer ~30 s, joue en boucle.
+// Bruits blanc, rose, brun. Génère un AudioBuffer couvrant toute la durée de
+// rendu : aucune boucle interne, donc aucun clic à un raccord intermédiaire.
 
-const BUFFER_SECONDS = 30;
+const DEFAULT_SECONDS = 30;
 
-function makeBuffer(ctx, fill) {
-  const len = ctx.sampleRate * BUFFER_SECONDS;
+function makeBuffer(ctx, fill, seconds) {
+  const len = Math.round(ctx.sampleRate * seconds);
   const buf = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let ch = 0; ch < 2; ch++) {
     fill(buf.getChannelData(ch));
@@ -44,21 +45,22 @@ function fillBrown(data) {
 
 const FILLERS = { white: fillWhite, pink: fillPink, brown: fillBrown };
 
-// Cache par AudioContext + couleur.
+// Cache par AudioContext + couleur + durée.
 const cache = new WeakMap();
-function getCached(ctx, color) {
+function getCached(ctx, color, seconds) {
   let perCtx = cache.get(ctx);
   if (!perCtx) { perCtx = {}; cache.set(ctx, perCtx); }
-  if (!perCtx[color]) perCtx[color] = makeBuffer(ctx, FILLERS[color]);
-  return perCtx[color];
+  const key = `${color}:${seconds}`;
+  if (!perCtx[key]) perCtx[key] = makeBuffer(ctx, FILLERS[color], seconds);
+  return perCtx[key];
 }
 
-export function makeColoredNoise(color) {
+export function makeColoredNoise(color, seconds = DEFAULT_SECONDS) {
   return (ctx, dest) => {
-    const buffer = getCached(ctx, color);
+    const buffer = getCached(ctx, color, seconds);
     const src = ctx.createBufferSource();
     src.buffer = buffer;
-    src.loop = true;
+    src.loop = true; // sécurité : le buffer couvre déjà toute la durée de rendu
     src.connect(dest);
     src.start();
     return { stop: (t = 0) => src.stop(t) };

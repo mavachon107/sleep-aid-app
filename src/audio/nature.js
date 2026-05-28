@@ -82,9 +82,9 @@ export function makeRain(duration = 60) {
   };
 }
 
-export function makeWaves() {
+export function makeWaves(duration = 50) {
   return (ctx, dest) => {
-    const bed = makePinkLoop(ctx);
+    const bed = makePinkLoop(ctx, duration);
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.frequency.value = 800;

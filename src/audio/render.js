@@ -4,12 +4,39 @@
 
 const SAMPLE_RATE = 44100;
 
+// Durée du recouvrement entre les deux éléments <audio> qui se relaient (cf.
+// engine.js). Un fondu enchaîné en puissance constante de cette durée est gravé
+// en tête et en queue du WAV : à la jointure, la queue de l'un (cos) et la tête
+// de l'autre (sin) s'additionnent à puissance constante (cos²+sin²=1) pour un
+// rebouclage sans coupure ni clic, sans aucune automation de volume en JS.
+export const CROSSFADE_SEC = 1.5;
+
 export async function renderToBlobUrl(buildFn, durationSec) {
   const ctx = new OfflineAudioContext(2, Math.round(SAMPLE_RATE * durationSec), SAMPLE_RATE);
   buildFn(ctx, ctx.destination);
   const buffer = await ctx.startRendering();
+  applyEdgeFades(buffer, CROSSFADE_SEC);
   const wav = audioBufferToWav(buffer);
   return URL.createObjectURL(new Blob([wav], { type: "audio/wav" }));
+}
+
+// Fondu en puissance constante gravé sur les `fadeSec` premières et dernières
+// secondes : gain = sin(π/2 · i/n) depuis chaque bord (0 au bord, 1 à n).
+function applyEdgeFades(buffer, fadeSec) {
+  const n = Math.min(
+    Math.floor(buffer.sampleRate * fadeSec),
+    Math.floor(buffer.length / 2)
+  );
+  if (n <= 0) return;
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const d = buffer.getChannelData(ch);
+    const last = d.length - 1;
+    for (let i = 0; i < n; i++) {
+      const g = Math.sin((Math.PI / 2) * (i / n));
+      d[i] *= g; // fondu d'entrée (tête)
+      d[last - i] *= g; // fondu de sortie (queue)
+    }
+  }
 }
 
 // PCM 16-bit entrelacé, header RIFF/WAVE/fmt /data minimal.

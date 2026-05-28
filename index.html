@@ -53,9 +53,11 @@
       <form method="dialog"><button class="btn-close">Fermer</button></form>
     </dialog>
 
-    <!-- Élément média officiel : indispensable pour que l'audio continue
-         quand l'écran se verrouille ou que l'app passe en arrière-plan (iOS). -->
+    <!-- Deux éléments média qui se relaient (ping-pong) pour une boucle sans
+         coupure ; indispensables pour que l'audio continue quand l'écran se
+         verrouille ou que l'app passe en arrière-plan (iOS). Voir engine.js. -->
     <audio id="audio" playsinline preload="auto" hidden></audio>
+    <audio id="audio2" playsinline preload="auto" hidden></audio>
 
     <script type="module" src="src/main.js"></script>
   </body>

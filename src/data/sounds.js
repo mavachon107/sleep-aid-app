@@ -2,7 +2,8 @@
 // solid | modere | faible | aucune
 // Chaque entrée fournit un `factory(loopDuration)` retournant un constructeur (ctx, dest) -> { stop }.
 // `loopDuration` est choisie comme multiple entier des périodicités internes pour
-// que la boucle <audio loop> soit sans clic à la jointure.
+// que la tête et la queue du rendu coïncident en phase : le relais à fondu
+// enchaîné des deux <audio> (voir engine.js) reboucle alors sans clic ni à-coup.
 
 import { makeColoredNoise } from "../audio/coloredNoise.js";
 import { makeBinaural } from "../audio/binaural.js";
@@ -17,7 +18,7 @@ export const SOUNDS = [
     loopDuration: 60,
     blurb:
       "Spectre en -3 dB/octave. Papalambros et al. (2017) ont montré qu'une stimulation acoustique rose en phase avec les ondes lentes améliore le sommeil profond et la mémoire chez l'adulte.",
-    factory: () => makeColoredNoise("pink"),
+    factory: (dur) => makeColoredNoise("pink", dur),
   },
   {
     id: "brown",
@@ -26,7 +27,7 @@ export const SOUNDS = [
     loopDuration: 60,
     blurb:
       "Plus grave que le rose (-6 dB/octave), souvent perçu comme apaisant. Effet de masquage des bruits ambiants documenté ; preuves cliniques de qualité limitée mais effet plausible.",
-    factory: () => makeColoredNoise("brown"),
+    factory: (dur) => makeColoredNoise("brown", dur),
   },
   {
     id: "white",
@@ -35,7 +36,7 @@ export const SOUNDS = [
     loopDuration: 60,
     blurb:
       "Spectre plat, masque efficacement les bruits parasites. La revue Cochrane 2021 (Riedy) note des preuves limitées mais cohérentes pour la réduction du temps d'endormissement en milieu bruyant.",
-    factory: () => makeColoredNoise("white"),
+    factory: (dur) => makeColoredNoise("white", dur),
   },
   {
     id: "rain",
@@ -53,7 +54,7 @@ export const SOUNDS = [
     loopDuration: 50, // 4 cycles complets du LFO 0.08 Hz (période 12.5 s)
     blurb:
       "Modulation lente d'amplitude qui rappelle la respiration calme. Mêmes effets parasympathiques que les sons naturels en général.",
-    factory: () => makeWaves(),
+    factory: (dur) => makeWaves(dur),
   },
   {
     id: "binaural-delta",
